@@ -18,20 +18,15 @@
 //@@ INSERT CODE HERE
 __global__ void convolution_image_kernel(float *out, float *in, int height, int width, int channels,
     const float* __restrict__ M){
+  float sum, pixel, maskVal;
 
   __shared__ float Ns[BLOCK_WIDTH][BLOCK_WIDTH];
   int tx = threadIdx.x;
   int ty = threadIdx.y;
   int row_o = blockIdx.y*O_TILE_WIDTH + ty;
   int col_o = blockIdx.x*O_TILE_WIDTH + tx;
-
   int row_i = row_o - Mask_radius;
   int col_i = col_o - Mask_radius;
-
-  float sum;
-  float pixel;
-  float maskVal;
-
 
   //load image data for mask (and also ghost elements if necessary)
   //into shared variable. e.g. loading a 16x16x3 subimage
@@ -53,16 +48,12 @@ __global__ void convolution_image_kernel(float *out, float *in, int height, int 
           sum += pixel*maskVal;
         }
       }
-
-
       if (row_o < height && col_o < width) {
         out[ (row_o * width + col_o) * channels + c] = min(max(0.0f,sum),1.0f);
       }
     }
-
     __syncthreads();
   } 
-
 }
 
 
